@@ -1,4 +1,10 @@
 #include <Windows.h>
+#define RETURN_IF_ZERO(v) if (v == 0) return __LINE__
+
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	return DefWindowProc(hWnd, message, wParam, lParam);
+}
 
 int WINAPI wWinMain(
 	_In_ HINSTANCE hInstance,
@@ -9,7 +15,7 @@ int WINAPI wWinMain(
 {
 	WNDCLASS wndClass;    
 	wndClass.style = 0;
-	wndClass.lpfnWndProc = NULL;
+	wndClass.lpfnWndProc = WndProc;
 	wndClass.cbClsExtra = 0;
 	wndClass.cbWndExtra = 0;
 	wndClass.hInstance = hInstance;
@@ -19,11 +25,8 @@ int WINAPI wWinMain(
 	wndClass.lpszMenuName = NULL;
 	wndClass.lpszClassName = L"DX12BaseTutorialClass";
 	ATOM atom = RegisterClass(&wndClass);
-
-	if (atom == 0)
-	{
-		return 1;
-	}
-
+	RETURN_IF_ZERO(atom);
+	CreateWindow(L"DX12BaseTutorialClass", L"DX12", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 
+		100, 0, 300, 200, NULL, NULL, hInstance, NULL);
 	return 0;
 }
