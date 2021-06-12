@@ -26,7 +26,14 @@ int WINAPI wWinMain(
 	wndClass.lpszClassName = L"DX12BaseTutorialClass";
 	ATOM atom = RegisterClass(&wndClass);
 	RETURN_IF_ZERO(atom);
-	CreateWindow(L"DX12BaseTutorialClass", L"DX12", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 
+	HWND hWnd = CreateWindow(L"DX12BaseTutorialClass", L"DX12", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 
 		100, 0, 300, 200, NULL, NULL, hInstance, NULL);
+	while (TRUE)
+	{
+		MSG msg;
+		PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE);
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
 	return 0;
 }
