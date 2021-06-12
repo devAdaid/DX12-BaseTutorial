@@ -42,22 +42,22 @@ int WINAPI wWinMain(
 		RETURN_IF_ZERO(atom);
 	}
 
-	// À©µµ¿ì »ý¼º
+	// ìœˆë„ìš° ìƒì„±
 	HWND hWnd = CreateWindow(L"DX12BaseTutorialClass", L"DX12", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 
 		100, 0, 300, 200, NULL, NULL, hInstance, NULL);
 
-	// µð¹ö±× ·¹ÀÌ¾î »ý¼º
+	// ë””ë²„ê·¸ ë ˆì´ì–´ ìƒì„±
 	ID3D12Debug* debug = NULL;
 	D3D12GetDebugInterface(&IID_ID3D12Debug, &debug);
 	RETURN_IF_ZERO(debug);
 	debug->lpVtbl->EnableDebugLayer(debug);
 
-	// µð¹ÙÀÌ½º »ý¼º
+	// ë””ë°”ì´ìŠ¤ ìƒì„±
 	ID3D12Device* device = NULL;
 	D3D12CreateDevice(NULL, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, &device);
 	RETURN_IF_ZERO(device);
 
-	// Ä¿¸Çµå 3ÇüÁ¦ »ý¼º
+	// ì»¤ë§¨ë“œ 3í˜•ì œ ìƒì„±
 	ID3D12CommandAllocator* commandAllocator = NULL;
 	ID3D12GraphicsCommandList* commandList = NULL;
 	ID3D12CommandQueue* commandQueue = NULL;
@@ -79,11 +79,32 @@ int WINAPI wWinMain(
 	device->lpVtbl->CreateCommandQueue(device, &commandQueueDesc, &IID_ID3D12CommandQueue, &commandQueue);
 	RETURN_IF_ZERO(commandQueue);
 
-	// ÆÑÅä¸® »ý¼º
+	// íŒ©í† ë¦¬ ìƒì„±
 	IDXGIFactory2* dxgiFactory = NULL;
 	CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, &IID_IDXGIFactory2, &dxgiFactory);
 
-	// ÇÁ·Î±×·¥ ·çÇÁ
+	// ìŠ¤ì™‘ ì²´ì¸ ìƒì„±
+	DXGI_SWAP_CHAIN_DESC swapChainDesc;
+	swapChainDesc.BufferDesc.Width = 300;
+	swapChainDesc.BufferDesc.Height = 200;
+	swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
+	swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
+	swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_FORMAT_R8G8B8A8_UNORM;
+	swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+	swapChainDesc.SampleDesc.Count = 1;
+	swapChainDesc.SampleDesc.Quality = 0;
+	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	swapChainDesc.BufferCount = 2;
+	swapChainDesc.OutputWindow = hWnd;
+	swapChainDesc.Windowed = TRUE;
+	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	swapChainDesc.Flags = 0;
+
+	IDXGISwapChain* swapChain = NULL;
+	dxgiFactory->lpVtbl->CreateSwapChain(dxgiFactory, (IUnknown*)commandQueue, &swapChainDesc, &swapChain);
+
+	// í”„ë¡œê·¸ëž¨ ë£¨í”„
 	while (gQuit == FALSE)
 	{
 		MSG msg;
@@ -92,7 +113,8 @@ int WINAPI wWinMain(
 		DispatchMessage(&msg);
 	}
 
-	// ¸Þ¸ð¸® ÇØÁ¦
+	// ë©”ëª¨ë¦¬ í•´ì œ
+	COM_RELEASE(swapChain);
 	COM_RELEASE(dxgiFactory);
 	COM_RELEASE(commandQueue);
 	COM_RELEASE(commandList);
