@@ -69,6 +69,7 @@ int WINAPI wWinMain(
 	device->lpVtbl->CreateCommandList(device, 0, D3D12_COMMAND_LIST_TYPE_DIRECT, 
 		commandAllocator, NULL, &IID_ID3D12GraphicsCommandList, &commandList);
 	RETURN_IF_ZERO(commandList);
+	commandList->lpVtbl->Close(commandList);
 
 	D3D12_COMMAND_QUEUE_DESC commandQueueDesc;
     commandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
@@ -141,6 +142,18 @@ int WINAPI wWinMain(
 		PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE);
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
+
+		// 초기화
+		commandAllocator->lpVtbl->Reset(commandAllocator);
+		commandList->lpVtbl->Reset(commandList, commandAllocator, NULL);
+
+		// 커맨드 삽입
+		// 커맨드 삽입 끝
+		
+		// 커맨드 실행
+		commandList->lpVtbl->Close(commandList);
+		ID3D12CommandList* commandListList[] = { (ID3D12CommandList*)commandList };
+		commandQueue->lpVtbl->ExecuteCommandLists(commandQueue, 1, commandListList);
 	}
 
 	// 메모리 해제
