@@ -119,6 +119,8 @@ int WINAPI wWinMain(
 	D3D12_CPU_DESCRIPTOR_HANDLE descHandle;
 	((void(__stdcall *)(ID3D12DescriptorHeap*, D3D12_CPU_DESCRIPTOR_HANDLE*))
 		descHeap->lpVtbl->GetCPUDescriptorHandleForHeapStart)(descHeap, &descHandle);
+
+	UINT rtvSize = device->lpVtbl->GetDescriptorHandleIncrementSize(device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	
 	// 스왑 버퍼 생성
 	ID3D12Resource* bufferList[2] = { 0 };
@@ -129,6 +131,7 @@ int WINAPI wWinMain(
 
 		// 이 상황에서는 Desc 값이 이미 있어서 NULL로 해줘도 된다
 		device->lpVtbl->CreateRenderTargetView(device, bufferList[i], NULL, descHandle);
+		descHandle.ptr += rtvSize;
 	}
 
 	// 프로그램 루프
