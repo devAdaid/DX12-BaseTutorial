@@ -1,4 +1,6 @@
+#define INITGUID
 #include <Windows.h>
+#include <d3d12.h>
 #define RETURN_IF_ZERO(v) if (v == 0) return __LINE__
 BOOL gQuit = FALSE;
 
@@ -40,6 +42,10 @@ int WINAPI wWinMain(
 
 	HWND hWnd = CreateWindow(L"DX12BaseTutorialClass", L"DX12", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 
 		100, 0, 300, 200, NULL, NULL, hInstance, NULL);
+
+	ID3D12Device* device = NULL;
+	D3D12CreateDevice(NULL, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, &device);
+	RETURN_IF_ZERO(device);
 
 	while (gQuit == FALSE)
 	{
