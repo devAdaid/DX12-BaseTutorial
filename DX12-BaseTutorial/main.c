@@ -104,6 +104,33 @@ int WINAPI wWinMain(
 	IDXGISwapChain* swapChain = NULL;
 	dxgiFactory->lpVtbl->CreateSwapChain(dxgiFactory, (IUnknown*)commandQueue, &swapChainDesc, &swapChain);
 
+	// 서술자 힙 생성
+	D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc;
+	descHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	descHeapDesc.NumDescriptors = 2;
+	descHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	descHeapDesc.NodeMask = 0;
+
+	ID3D12DescriptorHeap* descHeap = NULL;
+	device->lpVtbl->CreateDescriptorHeap(device, &descHeapDesc, &IID_ID3D12DescriptorHeap, &descHeap);
+	RETURN_IF_ZERO(descHeap);
+
+	// CPU 서술자 핸들 가져옴: 버그 있어서 올바른 시그니쳐로 함수 형변환 필요
+	D3D12_CPU_DESCRIPTOR_HANDLE descHandle;
+	((void(__stdcall *)(ID3D12DescriptorHeap*, D3D12_CPU_DESCRIPTOR_HANDLE*))
+		descHeap->lpVtbl->GetCPUDescriptorHandleForHeapStart)(descHeap, &descHandle);
+	
+	// 스왑 버퍼 생성
+	ID3D12Resource* bufferList[2] = { 0 };
+	for (int i = 0; i < 2; i++)
+	{
+		swapChain->lpVtbl->GetBuffer(swapChain, i, &IID_ID3D12Resource, &bufferList[i]);
+		RETURN_IF_ZERO(bufferList[i]);
+
+		// 이 상황에서는 Desc 값이 이미 있어서 NULL로 해줘도 된다
+		device->lpVtbl->CreateRenderTargetView(device, bufferList[i], NULL, descHandle);
+	}
+
 	// 프로그램 루프
 	while (gQuit == FALSE)
 	{
@@ -114,6 +141,9 @@ int WINAPI wWinMain(
 	}
 
 	// 메모리 해제
+	COM_RELEASE(bufferList[0]);
+	COM_RELEASE(bufferList[1]);
+	COM_RELEASE(descHeap);
 	COM_RELEASE(swapChain);
 	COM_RELEASE(dxgiFactory);
 	COM_RELEASE(commandQueue);
