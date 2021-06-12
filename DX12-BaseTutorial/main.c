@@ -1,8 +1,13 @@
 #include <Windows.h>
 #define RETURN_IF_ZERO(v) if (v == 0) return __LINE__
+BOOL gQuit = FALSE;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	if (message == WM_DESTROY)
+	{
+		gQuit = TRUE;
+	}
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
@@ -28,7 +33,7 @@ int WINAPI wWinMain(
 	RETURN_IF_ZERO(atom);
 	HWND hWnd = CreateWindow(L"DX12BaseTutorialClass", L"DX12", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 
 		100, 0, 300, 200, NULL, NULL, hInstance, NULL);
-	while (TRUE)
+	while (gQuit == FALSE)
 	{
 		MSG msg;
 		PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE);
