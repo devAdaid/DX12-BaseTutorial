@@ -8,6 +8,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		gQuit = TRUE;
 	}
+	if (message == WM_KEYDOWN && wParam == VK_ESCAPE)
+	{
+		gQuit = TRUE;
+	}
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
