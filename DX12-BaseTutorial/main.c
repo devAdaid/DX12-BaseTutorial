@@ -41,18 +41,22 @@ int WINAPI wWinMain(
 		RETURN_IF_ZERO(atom);
 	}
 
+	// 윈도우 생성
 	HWND hWnd = CreateWindow(L"DX12BaseTutorialClass", L"DX12", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 
 		100, 0, 300, 200, NULL, NULL, hInstance, NULL);
 
+	// 디버그 레이어 생성
 	ID3D12Debug* debug = NULL;
 	D3D12GetDebugInterface(&IID_ID3D12Debug, &debug);
 	RETURN_IF_ZERO(debug);
 	debug->lpVtbl->EnableDebugLayer(debug);
 
+	// 디바이스 생성
 	ID3D12Device* device = NULL;
 	D3D12CreateDevice(NULL, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, &device);
 	RETURN_IF_ZERO(device);
 
+	// 커맨드 3형제 생성
 	ID3D12CommandAllocator* commandAllocator = NULL;
 	ID3D12GraphicsCommandList* commandList = NULL;
 	ID3D12CommandQueue* commandQueue = NULL;
@@ -74,6 +78,7 @@ int WINAPI wWinMain(
 	device->lpVtbl->CreateCommandQueue(device, &commandQueueDesc, &IID_ID3D12CommandQueue, &commandQueue);
 	RETURN_IF_ZERO(commandQueue);
 
+	// 프로그램 루프
 	while (gQuit == FALSE)
 	{
 		MSG msg;
@@ -82,6 +87,7 @@ int WINAPI wWinMain(
 		DispatchMessage(&msg);
 	}
 
+	// 메모리 해제
 	COM_RELEASE(commandQueue);
 	COM_RELEASE(commandList);
 	COM_RELEASE(commandAllocator);
