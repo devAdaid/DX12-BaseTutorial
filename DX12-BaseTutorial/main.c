@@ -43,6 +43,11 @@ int WINAPI wWinMain(
 	HWND hWnd = CreateWindow(L"DX12BaseTutorialClass", L"DX12", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 
 		100, 0, 300, 200, NULL, NULL, hInstance, NULL);
 
+	ID3D12Debug* debug = NULL;
+	D3D12GetDebugInterface(&IID_ID3D12Debug, &debug);
+	RETURN_IF_ZERO(debug);
+	debug->lpVtbl->EnableDebugLayer(debug);
+
 	ID3D12Device* device = NULL;
 	D3D12CreateDevice(NULL, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, &device);
 	RETURN_IF_ZERO(device);
