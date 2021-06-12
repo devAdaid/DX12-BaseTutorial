@@ -2,6 +2,7 @@
 #include <Windows.h>
 #include <d3d12.h>
 #define RETURN_IF_ZERO(v) if (v == 0) return __LINE__
+#define COM_RELEASE(v) v->lpVtbl->Release(v)
 BOOL gQuit = FALSE;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -58,8 +59,20 @@ int WINAPI wWinMain(
 
 	device->lpVtbl->CreateCommandAllocator(device, D3D12_COMMAND_LIST_TYPE_DIRECT, 
 		&IID_ID3D12CommandAllocator, &commandAllocator);
-	device->lpVtbl->CreateCommandList;
-	device->lpVtbl->CreateCommandQueue;
+	RETURN_IF_ZERO(commandAllocator);
+
+	device->lpVtbl->CreateCommandList(device, 0, D3D12_COMMAND_LIST_TYPE_DIRECT, 
+		commandAllocator, NULL, &IID_ID3D12GraphicsCommandList, &commandList);
+	RETURN_IF_ZERO(commandList);
+
+	D3D12_COMMAND_QUEUE_DESC commandQueueDesc;
+    commandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+    commandQueueDesc.Priority = 0;
+    commandQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+    commandQueueDesc.NodeMask = 0;
+
+	device->lpVtbl->CreateCommandQueue(device, &commandQueueDesc, &IID_ID3D12CommandQueue, &commandQueue);
+	RETURN_IF_ZERO(commandQueue);
 
 	while (gQuit == FALSE)
 	{
@@ -68,5 +81,12 @@ int WINAPI wWinMain(
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
+
+	COM_RELEASE(commandQueue);
+	COM_RELEASE(commandList);
+	COM_RELEASE(commandAllocator);
+	COM_RELEASE(device);
+	COM_RELEASE(debug);
+
 	return 0;
 }
