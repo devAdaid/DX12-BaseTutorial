@@ -1,6 +1,7 @@
 #define INITGUID
 #include <Windows.h>
 #include <d3d12.h>
+#include <dxgi1_6.h>
 #define RETURN_IF_ZERO(v) if (v == 0) return __LINE__
 #define COM_RELEASE(v) v->lpVtbl->Release(v)
 BOOL gQuit = FALSE;
@@ -78,6 +79,10 @@ int WINAPI wWinMain(
 	device->lpVtbl->CreateCommandQueue(device, &commandQueueDesc, &IID_ID3D12CommandQueue, &commandQueue);
 	RETURN_IF_ZERO(commandQueue);
 
+	// 팩토리 생성
+	IDXGIFactory2* dxgiFactory = NULL;
+	CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, &IID_IDXGIFactory2, &dxgiFactory);
+
 	// 프로그램 루프
 	while (gQuit == FALSE)
 	{
@@ -88,6 +93,7 @@ int WINAPI wWinMain(
 	}
 
 	// 메모리 해제
+	COM_RELEASE(dxgiFactory);
 	COM_RELEASE(commandQueue);
 	COM_RELEASE(commandList);
 	COM_RELEASE(commandAllocator);
