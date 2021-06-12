@@ -47,6 +47,15 @@ int WINAPI wWinMain(
 	D3D12CreateDevice(NULL, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, &device);
 	RETURN_IF_ZERO(device);
 
+	ID3D12CommandAllocator* commandAllocator = NULL;
+	ID3D12GraphicsCommandList* commandList = NULL;
+	ID3D12CommandQueue* commandQueue = NULL;
+
+	device->lpVtbl->CreateCommandAllocator(device, D3D12_COMMAND_LIST_TYPE_DIRECT, 
+		&IID_ID3D12CommandAllocator, &commandAllocator);
+	device->lpVtbl->CreateCommandList;
+	device->lpVtbl->CreateCommandQueue;
+
 	while (gQuit == FALSE)
 	{
 		MSG msg;
