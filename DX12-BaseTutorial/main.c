@@ -116,23 +116,25 @@ int WINAPI wWinMain(
 	device->lpVtbl->CreateDescriptorHeap(device, &descHeapDesc, &IID_ID3D12DescriptorHeap, &descHeap);
 	RETURN_IF_ZERO(descHeap);
 
-	// CPU 서술자 핸들 가져옴: 버그 있어서 올바른 시그니쳐로 함수 형변환 필요
-	D3D12_CPU_DESCRIPTOR_HANDLE descHandle;
-	((void(__stdcall *)(ID3D12DescriptorHeap*, D3D12_CPU_DESCRIPTOR_HANDLE*))
-		descHeap->lpVtbl->GetCPUDescriptorHandleForHeapStart)(descHeap, &descHandle);
 
 	UINT rtvHeapSize = device->lpVtbl->GetDescriptorHandleIncrementSize(device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	
-	// 스왑 버퍼 생성
 	ID3D12Resource* bufferList[2] = { 0 };
-	for (int i = 0; i < 2; i++)
 	{
-		swapChain->lpVtbl->GetBuffer(swapChain, i, &IID_ID3D12Resource, &bufferList[i]);
-		RETURN_IF_ZERO(bufferList[i]);
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle;
+		// CPU 서술자 핸들 가져옴: 버그 있어서 올바른 시그니쳐로 함수 형변환 필요
+		((void(__stdcall *)(ID3D12DescriptorHeap*, D3D12_CPU_DESCRIPTOR_HANDLE*))
+			descHeap->lpVtbl->GetCPUDescriptorHandleForHeapStart)(descHeap, &rtvHandle);
 
-		// 이 상황에서는 Desc 값이 이미 있어서 NULL로 해줘도 된다
-		device->lpVtbl->CreateRenderTargetView(device, bufferList[i], NULL, descHandle);
-		descHandle.ptr += rtvHeapSize;
+		// 스왑 버퍼 생성
+		for (int i = 0; i < 2; i++)
+		{
+			swapChain->lpVtbl->GetBuffer(swapChain, i, &IID_ID3D12Resource, &bufferList[i]);
+			RETURN_IF_ZERO(bufferList[i]);
+
+			// 이 상황에서는 Desc 값이 이미 있어서 NULL로 해줘도 된다
+			device->lpVtbl->CreateRenderTargetView(device, bufferList[i], NULL, rtvHandle);
+			rtvHandle.ptr += rtvHeapSize;
+		}
 	}
 
 	// 펜스 생성
@@ -140,6 +142,9 @@ int WINAPI wWinMain(
 	ID3D12Fence* fence = NULL;
 	device->lpVtbl->CreateFence(device, fenceValue, D3D12_FENCE_FLAG_NONE, &IID_ID3D12Fence, &fence);
 	RETURN_IF_ZERO(fence);
+
+	// 백버퍼 인덱스
+	UINT backBufferIndex = 0;
 
 	// 프로그램 루프
 	while (gQuit == FALSE)
@@ -154,6 +159,58 @@ int WINAPI wWinMain(
 		commandList->lpVtbl->Reset(commandList, commandAllocator, NULL);
 
 		// 커맨드 삽입
+		{
+			D3D12_RESOURCE_BARRIER barrier;
+			barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+			barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+			barrier.Transition.pResource = bufferList[backBufferIndex];
+			barrier.Transition.Subresource = 0;
+			barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+			barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+			commandList->lpVtbl->ResourceBarrier(commandList, 1, &barrier); 
+		}
+
+		{
+			D3D12_RECT scissorRect;
+			scissorRect.left = 0;
+			scissorRect.top = 0;
+			scissorRect.right = 300;
+			scissorRect.bottom = 200;
+			commandList->lpVtbl->RSSetScissorRects(commandList, 1, &scissorRect);
+
+			D3D12_VIEWPORT viewport;
+			viewport.TopLeftX = 0;
+			viewport.TopLeftY = 0;
+			viewport.Width = 300;
+			viewport.Height = 200;
+			viewport.MinDepth = 0;
+			viewport.MaxDepth = 1;
+			commandList->lpVtbl->RSSetViewports(commandList, 1, &viewport);
+
+			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle;
+			((void(__stdcall *)(ID3D12DescriptorHeap*, D3D12_CPU_DESCRIPTOR_HANDLE*))
+				descHeap->lpVtbl->GetCPUDescriptorHandleForHeapStart)(descHeap, &rtvHandle);
+			rtvHandle.ptr += backBufferIndex * rtvHeapSize;
+
+			float clearColor[] = { 1,0,0,1 };
+			D3D12_RECT clearRect;
+			clearRect.left = 0;
+			clearRect.top = 0;
+			clearRect.right = 300;
+			clearRect.bottom = 200;
+			commandList->lpVtbl->ClearRenderTargetView(commandList, rtvHandle, clearColor, 1, &clearRect);
+		}
+
+		{
+			D3D12_RESOURCE_BARRIER barrier;
+			barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+			barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+			barrier.Transition.pResource = bufferList[backBufferIndex];
+			barrier.Transition.Subresource = 0;
+			barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+			barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+			commandList->lpVtbl->ResourceBarrier(commandList, 1, &barrier);
+		}
 		// 커맨드 삽입 끝
 		
 		// 커맨드 실행
@@ -163,6 +220,7 @@ int WINAPI wWinMain(
 
 		// 프론트 버퍼 표시
 		swapChain->lpVtbl->Present(swapChain, 0, 0);
+		backBufferIndex = 1 - backBufferIndex;
 
 		// 펜스 값 증가 및 Signal
 		// 비동기 안전하게 하기 위해서는 InterlockedIncrement64 사용
