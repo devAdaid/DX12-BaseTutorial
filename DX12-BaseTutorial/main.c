@@ -64,13 +64,13 @@ int WINAPI wWinMain(
 {
 	{
 		WNDCLASS wndClass;
-		wndClass.style = 0;
+		wndClass.style = CS_HREDRAW | CS_VREDRAW;
 		wndClass.lpfnWndProc = WndProc;
 		wndClass.cbClsExtra = 0;
 		wndClass.cbWndExtra = 0;
 		wndClass.hInstance = hInstance;
-		wndClass.hIcon = NULL;
-		wndClass.hCursor = NULL;
+		wndClass.hIcon = LoadIcon(NULL, IDI_SHIELD);
+		wndClass.hCursor = LoadCursor(NULL, IDC_ARROW);
 		wndClass.hbrBackground = NULL;
 		wndClass.lpszMenuName = NULL;
 		wndClass.lpszClassName = L"DX12BaseTutorialClass";
@@ -191,6 +191,9 @@ int WINAPI wWinMain(
 
 	ID3D12Resource* uploadBuffer = CreateCommittedResource(device, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, sizeof(vertexList));
 	RETURN_IF_ZERO(uploadBuffer);
+
+	ID3D12Resource* defaultBuffer = CreateCommittedResource(device, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON, sizeof(vertexList));
+	RETURN_IF_ZERO(defaultBuffer);
 
 	// 프로그램 루프
 	while (gQuit == FALSE)
