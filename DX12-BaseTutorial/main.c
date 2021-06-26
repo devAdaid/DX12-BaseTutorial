@@ -135,6 +135,12 @@ int WINAPI wWinMain(
 		descHandle.ptr += rtvHeapSize;
 	}
 
+	// 펜스 생성
+	UINT64 fenceValue = 0;
+	ID3D12Fence* fence = NULL;
+	device->lpVtbl->CreateFence(device, fenceValue, D3D12_FENCE_FLAG_NONE, &IID_ID3D12Fence, &fence);
+	RETURN_IF_ZERO(fence);
+
 	// 프로그램 루프
 	while (gQuit == FALSE)
 	{
@@ -154,9 +160,28 @@ int WINAPI wWinMain(
 		commandList->lpVtbl->Close(commandList);
 		ID3D12CommandList* commandListList[] = { (ID3D12CommandList*)commandList };
 		commandQueue->lpVtbl->ExecuteCommandLists(commandQueue, 1, commandListList);
+
+		// 프론트 버퍼 표시
+		swapChain->lpVtbl->Present(swapChain, 0, 0);
+
+		// 펜스 값 증가 및 Signal
+		// 비동기 안전하게 하기 위해서는 InterlockedIncrement64 사용
+		fenceValue += 1;
+		commandQueue->lpVtbl->Signal(commandQueue, fence, fenceValue);
+
+		// 기다려야 할 경우 이벤트가 발생할 때까지 대기
+		if (fence->lpVtbl->GetCompletedValue(fence) < fenceValue)
+		{
+			// win32 Event
+			HANDLE e = CreateEvent(NULL, FALSE, FALSE, NULL);
+			fence->lpVtbl->SetEventOnCompletion(fence, fenceValue, e);
+			WaitForSingleObject(e, INFINITE);
+			CloseHandle(e);
+		}
 	}
 
 	// 메모리 해제
+	COM_RELEASE(fence);
 	COM_RELEASE(bufferList[0]);
 	COM_RELEASE(bufferList[1]);
 	COM_RELEASE(descHeap);
