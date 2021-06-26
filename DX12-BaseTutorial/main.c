@@ -19,6 +19,42 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
+typedef struct _VERTEX
+{
+	float x;
+	float y;
+	float z;
+} VERTEX;
+
+ID3D12Resource* CreateCommittedResource(ID3D12Device* device, D3D12_HEAP_TYPE heapType, D3D12_RESOURCE_STATES initState, UINT64 bufferSize)
+{
+	D3D12_HEAP_PROPERTIES heapProp;
+	heapProp.Type = D3D12_HEAP_TYPE_UPLOAD;
+	heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+	heapProp.CreationNodeMask = 0;
+	heapProp.VisibleNodeMask = 0;
+
+	D3D12_RESOURCE_DESC rescDesc;
+	rescDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	rescDesc.Alignment = 0;
+	rescDesc.Width = sizeof(bufferSize);
+	rescDesc.Height = 1;
+	rescDesc.DepthOrArraySize = 1;
+	rescDesc.MipLevels = 1;
+	rescDesc.Format = DXGI_FORMAT_UNKNOWN;
+	rescDesc.SampleDesc.Count = 1;
+	rescDesc.SampleDesc.Quality = 0;
+	rescDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	rescDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+	ID3D12Resource* bufferResource = NULL;
+	device->lpVtbl->CreateCommittedResource(device, &heapProp, D3D12_HEAP_FLAG_NONE, &rescDesc, initState, NULL, &IID_ID3D12Resource, &bufferResource);
+	RETURN_IF_ZERO(bufferResource);
+
+	return bufferResource;
+}
+
 int WINAPI wWinMain(
 	_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -145,6 +181,16 @@ int WINAPI wWinMain(
 
 	// 백버퍼 인덱스
 	UINT backBufferIndex = 0;
+
+	// 업로드 디폴트 버퍼
+	VERTEX vertexList[] = {
+		{ 0, 0, 0 },
+		{ 0, 1, 0 },
+		{ 1, 0, 0 },
+	};
+
+	ID3D12Resource* uploadBuffer = CreateCommittedResource(device, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, sizeof(vertexList));
+	RETURN_IF_ZERO(uploadBuffer);
 
 	// 프로그램 루프
 	while (gQuit == FALSE)
