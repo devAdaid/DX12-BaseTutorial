@@ -192,13 +192,24 @@ int WINAPI wWinMain(
 				descHeap->lpVtbl->GetCPUDescriptorHandleForHeapStart)(descHeap, &rtvHandle);
 			rtvHandle.ptr += backBufferIndex * rtvHeapSize;
 
-			float clearColor[] = { 1,0,0,1 };
-			D3D12_RECT clearRect;
-			clearRect.left = 0;
-			clearRect.top = 0;
-			clearRect.right = 300;
-			clearRect.bottom = 200;
-			commandList->lpVtbl->ClearRenderTargetView(commandList, rtvHandle, clearColor, 1, &clearRect);
+			{
+				float clearColor[] = { 1,0,0,1 };
+				D3D12_RECT clearRect;
+				clearRect.left = 0;
+				clearRect.top = 0;
+				clearRect.right = 300 / 2;
+				clearRect.bottom = 200 / 2;
+				commandList->lpVtbl->ClearRenderTargetView(commandList, rtvHandle, clearColor, 1, &clearRect);
+			}
+			{
+				float clearColor[] = { 0,1,0,1 };
+				D3D12_RECT clearRect;
+				clearRect.left = 300 / 2;
+				clearRect.top = 200 / 2;
+				clearRect.right = 300;
+				clearRect.bottom = 200;
+				commandList->lpVtbl->ClearRenderTargetView(commandList, rtvHandle, clearColor, 1, &clearRect);
+			}
 		}
 
 		{
